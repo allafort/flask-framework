@@ -26,7 +26,8 @@ def about():
     return render_template('about.html')
 
 
-def get_data(ticker,key):
+def get_data(ticker):
+    key=os.environ.get("API_KEY")
     url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={}&apikey={}'.format(ticker, key)
     response = requests.get(url)
     response = response.json()
