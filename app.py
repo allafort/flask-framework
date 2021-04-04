@@ -75,7 +75,7 @@ def create_bokeh(ticker,price_checked_list):
 
     for i,price in enumerate(price_types):
         if price_checked_list[i]:
-            p.line(df['Date'],df[price],legend=price_names[i],color=palette[len(price_types)][i])
+            p.line(df['Date'],df[price],legend_label=price_names[i],color=palette[len(price_types)][i])
         else: 
             pass
     
