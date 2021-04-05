@@ -14,12 +14,10 @@ from bokeh.models import ColumnDataSource
 from bokeh.models import HoverTool
 from bokeh.embed import components
 from bokeh.layouts import gridplot
-from bokeh.palettes import Dark2 as palette
 
 
 app = Flask(__name__)
 app.vars={}
-app.vars['price_checked']=[]
 
 @app.route('/index',methods=['GET','POST'])
 def index():
@@ -28,12 +26,8 @@ def index():
     else:
         # request was a POST
         app.vars['stock_name'] = request.form['name_stock']
-        app.vars['price_checked']=[]
-        for p in ['price_type%i_name'%i for i in range(1,5)]:
-            if request.form.get(p) != None: app.vars['price_checked'].append(True)
-            else: app.vars['price_checked'].append(False)
-
-        script, div = create_bokeh(app.vars['stock_name'],app.vars['price_checked'])
+        
+        script, div = create_bokeh(app.vars['stock_name'])
         return render_template("show_bokeh.html", div=div,script=script)
     
 
@@ -57,38 +51,34 @@ def get_data(ticker):
     return df
 
 
-def create_bokeh(ticker,price_checked_list):
-    price_types=['1. open', '2. high', '3. low', '5. adjusted close']
-    price_names=['Opening','Highest','Lowest','Adjusted closing']
+def create_bokeh(ticker):
+   
     df=get_data(ticker)
     #source = ColumnDataSource(df)
     
     plot_options = dict(x_axis_type="datetime",plot_width=900, plot_height=400)
 
 
-    title='Daily prices for %s'%ticker
+    title='Open and close %s'%ticker
     p = figure(title=title,**plot_options)
     
     p.xaxis.axis_label = "Date"
     p.yaxis.axis_label = "Price ($)"
     p.xaxis.major_label_orientation = math.pi/4
 
-    for i,price in enumerate(price_types):
-        if price_checked_list[i]:
-            p.line(df['Date'],df[price],legend_label=price_names[i],color=palette[len(price_types)][i])
-        else: 
-            pass
-    
-    #p2 = figure(title='Day change',**plot_options)
-    #p2.xaxis.axis_label = "Date"
-    #p2.yaxis.axis_label = "Price ($)"
-    #p2.xaxis.major_label_orientation = math.pi/4
+    p.line(df['Date'],df['1. open'])#, legend_label='Opening price')
+    p.line(df['Date'],df['4. close'],color="firebrick")#, legend_label='Closing price')
 
-    #p2.line(df['Date'],(df['4. close']-df['1. open']),color="olive")
-
-    #fig = gridplot([[p],[p2]])
-    fig=p
     
+    p2 = figure(title='Day change',**plot_options)
+    p2.xaxis.axis_label = "Date"
+    p2.yaxis.axis_label = "Price ($)"
+    p2.xaxis.major_label_orientation = math.pi/4
+
+    p2.line(df['Date'],(df['4. close']-df['1. open']),color="olive")
+
+    fig = gridplot([[p],[p2]])
+
     script, div = components(fig)
     return script, div
 
